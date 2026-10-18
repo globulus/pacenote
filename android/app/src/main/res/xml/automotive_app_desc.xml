@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Media: the Claude Car audio app (talk, listen). Notification: per-session
+     messages, for replying through Android Auto's own voice reply.
+     No "template": a templated app must come from Play, and declaring one
+     could hide the whole app from a sideloaded install. -->
+<automotiveApp>
+    <uses name="media" />
+    <uses name="notification" />
+</automotiveApp>
