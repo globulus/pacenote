@@ -31,10 +31,10 @@ for ts in tailscale /Applications/Tailscale.app/Contents/MacOS/Tailscale /opt/ho
   TS_IP=""
 done
 [[ -n "$TS_IP" ]] || { echo "Can't find this Mac's Tailscale address: install Tailscale, sign in and connect, then re-run." >&2; exit 1; }
-# The phone reaches the Mac by its MagicDNS name when there is one: the prebuilt
-# app may only use plain HTTP to *.ts.net names (and Tailscale encrypts it).
-TS_NAME="$("$TS_CLI" status --json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("Self",{}).get("DNSName","").rstrip("."))' 2>/dev/null || true)"
-HOST="${TS_NAME:-$TS_IP}"
+# The phone reaches the Mac by its Tailscale IP: stable, and it doesn't depend on
+# the phone's DNS settings (Private DNS can hide MagicDNS names). The name is for display.
+TS_NAME="$("$TS_CLI" status --json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("Self",{}).get("HostName",""))' 2>/dev/null || true)"
+HOST="$TS_IP"
 
 umask 077
 mkdir -p "$PACENOTE_HOME"
@@ -49,6 +49,7 @@ printf 'Authorization: Bearer %s\n' "$(cat "$PACENOTE_HOME/token")" > "$PACENOTE
 chmod 600 "$PACENOTE_HOME/auth-header"
 # Where the phone reaches the service; the Android build reads this (and the token).
 echo "http://$HOST:$PORT" > "$PACENOTE_HOME/url"
+echo "${TS_NAME:-$(scutil --get ComputerName 2>/dev/null || hostname -s)}" > "$PACENOTE_HOME/name"
 
 (cd "$ROOT/bridge" && "$BUN" install --frozen-lockfile --no-summary)
 
@@ -104,5 +105,4 @@ launchctl bootstrap "gui/$(id -u)" "$PLIST" || { sleep 2; launchctl bootstrap "g
 echo "Installed and started the Pacenote service on http://$HOST:$PORT ($PLIST)."
 echo "If your projects are in Documents, Desktop or Downloads, macOS may ask to let \"bun\" access them: allow it."
 echo "Check it with: $ROOT/scripts/service.sh status"
-[[ -n "$TS_NAME" ]] || echo "Note: MagicDNS is off in your tailnet, so the prebuilt app can't connect. Turn it on in the Tailscale admin console, or build the app yourself."
 "$BUN" "$ROOT/bridge/src/pair.ts"

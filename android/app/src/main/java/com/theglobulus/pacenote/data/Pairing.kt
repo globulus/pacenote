@@ -3,8 +3,8 @@ package com.theglobulus.pacenote.data
 import java.net.URI
 import java.net.URLDecoder
 
-/** What the pairing QR code (scripts/pair.sh) carries: where the Mac is, and its token. */
-data class Pairing(val url: String, val token: String) {
+/** What the pairing QR code (scripts/pair.sh) carries: where the Mac is, its token and its name. */
+data class Pairing(val url: String, val token: String, val name: String? = null) {
     val host: String get() = URI(url).host
 
     companion object {
@@ -28,7 +28,22 @@ data class Pairing(val url: String, val token: String) {
             if (!TOKEN.matches(token)) return null
             val target = runCatching { URI(url) }.getOrNull() ?: return null
             if (target.scheme != "http" || target.host == null || !isTailnetHost(target.host)) return null
-            return Pairing(url, token)
+            return Pairing(url, token, params["name"]?.takeIf { it.isNotBlank() }?.take(64))
+        }
+
+        /**
+         * Whether the app may talk to this service address. Plain HTTP only inside
+         * the tailnet, where Tailscale encrypts it. Android's network security config
+         * can't name a whole IP range, so the app checks this itself.
+         */
+        fun allowedServiceUrl(url: String, allowLocal: Boolean = false): Boolean {
+            val u = runCatching { URI(url) }.getOrNull() ?: return false
+            val host = u.host ?: return false
+            return when (u.scheme) {
+                "https" -> true
+                "http" -> isTailnetHost(host) || (allowLocal && (host == "127.0.0.1" || host == "localhost"))
+                else -> false
+            }
         }
 
         /** MagicDNS names and Tailscale's 100.64.0.0/10 addresses. */

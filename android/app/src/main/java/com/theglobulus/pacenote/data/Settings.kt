@@ -25,6 +25,18 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("auto_listen", true)
         set(value) = prefs.edit { putBoolean("auto_listen", value) }
 
+    /** The paired Mac's name, for display. */
+    var macName: String
+        get() = prefs.getString("mac_name", null).orEmpty()
+        set(value) = prefs.edit { putString("mac_name", value.trim()) }
+
+    /** The "using it in the car" tips were dismissed. */
+    var carTipsDismissed: Boolean
+        get() = prefs.getBoolean("car_tips_dismissed", false)
+        set(value) = prefs.edit { putBoolean("car_tips_dismissed", value) }
+
+    val paired: Boolean get() = bridgeUrl.isNotBlank() && token.isNotBlank()
+
     /** Whether the background connection should run (and restart after reboot). */
     var enabled: Boolean
         get() = prefs.getBoolean("enabled", false)

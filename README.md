@@ -61,7 +61,6 @@ It works with every session on your Mac, from the terminal or the Claude desktop
 | **Network** | [Tailscale](https://tailscale.com) on the Mac and the phone, signed in to the same tailnet |
 | **Phone** | Android 14 or later, with Android Auto |
 | **Car** | Any car or head unit with Android Auto, wired or wireless |
-| **Tailnet setting** | [MagicDNS](https://tailscale.com/kb/1081/magicdns) on (the default), so the phone can reach the Mac by name |
 
 The phone app isn't on Google Play: you install it from [Releases](https://github.com/globulus/pacenote/releases), or build it yourself.
 
@@ -77,7 +76,7 @@ scripts/setup.sh
 
 The script:
 
-- creates `~/.pacenote/` with a random 64-character token, plus your Mac's service address (its Tailscale name, port 8788)
+- creates `~/.pacenote/` with a random 64-character token, plus your Mac's service address (its Tailscale IP, port 8788)
 - copies the service there and installs it as a background service (a launchd agent) that starts at login and restarts if it stops
 - prints a **pairing QR code** for the phone app. Show it again any time with `scripts/pair.sh`.
 
@@ -100,7 +99,7 @@ scripts/service.sh status    # or: restart | stop | start | logs | uninstall
 
 1. On your phone, download the latest `pacenote-*.apk` from [Releases](https://github.com/globulus/pacenote/releases/latest).
 2. Open it and allow the install when Android asks.
-3. Open **Pacenote**, tap **Pair with Mac**, and scan the QR code that `scripts/setup.sh` printed.
+3. Open **Pacenote**, tap **Scan QR code**, and scan the code that `scripts/setup.sh` printed.
 
 Pairing only accepts Tailscale addresses, and always asks before it saves one.
 
@@ -141,8 +140,8 @@ A debug build contains your token, so don't share it. The prebuilt app contains 
 On the phone:
 
 1. Open **Pacenote** and allow notifications and the microphone.
-2. Tap **Battery** and allow unrestricted battery use. Do the same for Tailscale, and set Tailscale to **Always-on VPN**, so the connection survives the phone sleeping.
-3. Make sure **Stay connected to your Mac** is on (pairing turns it on), then tap **Test**. It should say "Mac reachable".
+2. Under **Finish setting up**, allow unrestricted battery use. Do the same for Tailscale in Android's settings, and set Tailscale to **Always-on VPN**, so the connection survives the phone sleeping.
+3. The card at the top should say **Connected** and **Microphone ready**. **Test** checks the connection.
 
 ### 3. Android Auto
 
@@ -176,14 +175,17 @@ Things to know:
 ### On the phone
 
 <p align="center">
-  <img src="docs/phone-sessions.png" alt="The phone app: settings and the list of sessions on the Mac" width="32%">
-  &nbsp;&nbsp;
-  <img src="docs/phone-session.png" alt="A session on the phone: messages to and from Claude" width="32%">
-  <br><sub>The phone app with demo sessions: the session list, and a conversation.</sub>
+  <img src="docs/phone-pair.png" alt="First launch: pair with your Mac by scanning a QR code" width="30%">
+  &nbsp;
+  <img src="docs/phone-sessions.png" alt="The phone app: connection status and the sessions on your Mac" width="30%">
+  &nbsp;
+  <img src="docs/phone-session.png" alt="A session on the phone: messages to and from Claude" width="30%">
+  <br><sub>The phone app with demo sessions: pairing, your sessions, and a conversation.</sub>
 </p>
 
-- Tap a session to read and type to it. **Show in car** posts it as a message conversation in Android Auto.
-- **New** starts a session in a folder you've used Claude Code in before.
+- Tap a session to read and type to it. The car icon posts it as a message conversation in Android Auto.
+- **New session** starts one in a folder you've used Claude Code in before.
+- **Settings** has the Mac, voice language, follow-up listening, battery, updates and (under Advanced) the raw address and token.
 
 ### Message conversations (optional)
 
@@ -211,8 +213,8 @@ In the phone app, **Speech language** sets what you speak in the car and the lan
 ## Updating
 
 - **The Mac service:** pull the new code and run `scripts/setup.sh` again.
-- **The prebuilt app:** in Pacenote, tap **Update app**. It opens [Releases](https://github.com/globulus/pacenote/releases/latest); download the new APK and install it over the old one. Your pairing is kept.
-- **A self-built app:** run `scripts/publish-app.sh` on the Mac, then tap **Update app** on the phone. It downloads the new build from the Mac over Tailscale, so this works from anywhere. The first time, allow Pacenote to install apps.
+- **The prebuilt app:** in Pacenote's **Settings**, tap **Update**. It opens [Releases](https://github.com/globulus/pacenote/releases/latest); download the new APK and install it over the old one. Your pairing is kept.
+- **A self-built app:** run `scripts/publish-app.sh` on the Mac, then tap **Update** in the app's Settings. It downloads the new build from the Mac over Tailscale, so this works from anywhere. The first time, allow Pacenote to install apps.
 
 After an update, open the app once so the microphone is back on.
 
@@ -221,7 +223,7 @@ After an update, open the app once so the microphone is back on.
 - **Claude acts without you watching.** Car turns run unattended in auto permission mode. Read what that mode allows, and pick a stricter one with `PACENOTE_PERMISSION_MODE` if you prefer.
 - **Only your tailnet can reach the service.** It listens on the Mac's Tailscale address only, never on your local network, and every request needs the token. Plain HTTP is used inside the tailnet because Tailscale's WireGuard tunnel already encrypts it.
 - **Anyone with the token can run prompts in your sessions.** Keep `~/.pacenote/token`, the pairing QR code and any APK you built yourself private. The prebuilt APK contains no token. To change the token: delete the file, run `scripts/setup.sh`, then pair again.
-- **Pairing can't be hijacked by a link.** The app only pairs with Tailscale addresses (MagicDNS names and 100.64.0.0/10), and asks you first.
+- **Pairing can't be hijacked by a link.** The app only pairs with, and only talks plain HTTP to, Tailscale addresses (100.64.0.0/10 and MagicDNS names), and asks before pairing.
 - **New sessions start only in known folders,** ones that already have Claude Code sessions.
 - **Where your words go:** speech recognition uses your phone's recognition service, which may process audio online depending on your phone. Your messages then go to Claude Code on your Mac, which works as it always does. Pacenote itself sends nothing anywhere else.
 
@@ -232,7 +234,6 @@ After an update, open the app once so the microphone is back on.
 | Pacenote isn't in the car's app list | Android Auto developer mode and **Unknown sources** are on, and Pacenote is ticked in **Customize launcher**. |
 | "The microphone is off" | Open Pacenote on the phone once. This is needed after a restart or an update. |
 | **Test** can't reach the Mac | Is Tailscale on and connected, on both the phone and the Mac? Is the Mac awake? Run `scripts/service.sh status`. |
-| "Can't find your Mac by name" | Turn on Tailscale on the phone, and check that MagicDNS is on in the Tailscale admin console. |
 | "That isn't a Pacenote pairing code" | Scan the code from `scripts/pair.sh`. Only Tailscale addresses are accepted. |
 | `service.sh logs` says "is Tailscale connected?" | Connect Tailscale on the Mac; the service retries every 10 seconds. |
 | "macOS is blocking the car service from that folder" | Allow bun in Privacy & Security (see [The Mac service](#1-the-mac-service)). |
@@ -257,7 +258,7 @@ bridge/    Mac service (Bun + TypeScript; one small dependency, to print the QR 
   src/car.ts        routing, copies of open sessions, queueing, hub commands
   src/http.ts       the API (HTTP + server-sent events, bearer token)
   src/pair.ts       the pairing QR code
-android/   phone app (Kotlin, Android Views)
+android/   phone app (Kotlin, Jetpack Compose with Material 3)
   car/              the Android Auto audio app (MediaBrowserService)
   voice/            the spoken conversation: speech recognition, text to speech, tones
   service/, net/    the connection to the Mac (and the microphone)
@@ -281,8 +282,8 @@ The prebuilt APK is a release build: no address or token inside, and signed with
 
 ```bash
 cd android && ./gradlew :app:assembleRelease
-cp app/build/outputs/apk/release/app-release.apk pacenote-0.3.0.apk
-gh release create v0.3.0 pacenote-0.3.0.apk
+cp app/build/outputs/apk/release/app-release.apk pacenote-0.3.1.apk
+gh release create v0.3.1 pacenote-0.3.1.apk
 ```
 
 To try the car UI without a car, use Google's [Desktop Head Unit](https://developer.android.com/training/cars/testing/dhu): install it with `sdkmanager "extras;google;auto"`, choose **Start head unit server** in Android Auto's developer menu, then run `adb forward tcp:5277 tcp:5277` and `desktop-head-unit --usb`.

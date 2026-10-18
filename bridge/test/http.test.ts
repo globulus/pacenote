@@ -197,5 +197,6 @@ describe('pairing link', () => {
     expect(link).toBe(`pacenote://pair?url=http%3A%2F%2Fmac.tail123.ts.net%3A8788&token=${'ab'.repeat(32)}`)
     const u = new URL(link)
     expect(u.searchParams.get('url')).toBe('http://mac.tail123.ts.net:8788')
+    expect(new URL(pairingLink('http://100.64.0.1:8788', 'x', 'My Mac')).searchParams.get('name')).toBe('My Mac')
   })
 })

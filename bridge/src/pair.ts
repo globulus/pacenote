@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Prints the pairing QR code: the Pacenote app scans it (Pair with Mac) to
+ * Prints the pairing QR code: the Pacenote app scans it (Scan QR code) to
  * learn this Mac's address and token. Run by scripts/setup.sh and scripts/pair.sh.
  */
 import { readFileSync } from 'fs'
@@ -9,8 +9,9 @@ import { join } from 'path'
 import qrcode from 'qrcode-terminal'
 import { PACENOTE_HOME } from './config'
 
-export function pairingLink(url: string, token: string): string {
-  return `pacenote://pair?url=${encodeURIComponent(url)}&token=${encodeURIComponent(token)}`
+export function pairingLink(url: string, token: string, name?: string): string {
+  const link = `pacenote://pair?url=${encodeURIComponent(url)}&token=${encodeURIComponent(token)}`
+  return name ? `${link}&name=${encodeURIComponent(name)}` : link
 }
 
 if (import.meta.main) {
@@ -23,7 +24,11 @@ if (import.meta.main) {
     console.error(`No address or token in ${PACENOTE_HOME}: run scripts/setup.sh first.`)
     process.exit(1)
   }
-  console.log(`\nIn the Pacenote app, tap "Pair with Mac" and scan this (it contains your token: don't share it).\n`)
-  qrcode.generate(pairingLink(url, token), { small: true }, (code: string) => console.log(code))
+  let name: string | undefined
+  try {
+    name = readFileSync(join(PACENOTE_HOME, 'name'), 'utf8').trim() || undefined
+  } catch {}
+  console.log(`\nIn the Pacenote app, tap "Scan QR code" and scan this (it contains your token: don't share it).\n`)
+  qrcode.generate(pairingLink(url, token, name), { small: true }, (code: string) => console.log(code))
   console.log(`Mac: ${url}\n`)
 }

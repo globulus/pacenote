@@ -20,6 +20,8 @@ import com.theglobulus.pacenote.voice.VoiceState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.theglobulus.pacenote.net.SseConnection
 import java.io.File
 
 class App : Application() {
@@ -31,6 +33,13 @@ class App : Application() {
     lateinit var client: BridgeClient private set
     lateinit var notifier: ConversationNotifier private set
     lateinit var sender: ChatSender private set
+
+    /** The live connection to the Mac, for the phone screens. */
+    val connection = MutableStateFlow(SseConnection.State.STOPPED)
+    /** Whether the background service holds the microphone (so the car can listen). */
+    val micReady = MutableStateFlow(false)
+    /** The conversation open on the phone's screen: its replies need no notification. */
+    @Volatile var visibleChat: String? = null
 
     private val voiceLazy = lazy {
         lateinit var controller: VoiceController

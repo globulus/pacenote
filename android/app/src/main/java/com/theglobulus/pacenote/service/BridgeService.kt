@@ -81,11 +81,14 @@ class BridgeService : Service(), SseConnection.Listener {
             startForeground(ConversationNotifier.STATUS_ID, notification, base)
             false
         }
+        app.micReady.value = micActive
         app.notifier.updateStatus(statusText)
     }
 
     override fun onDestroy() {
         micActive = false
+        app.micReady.value = false
+        app.connection.value = SseConnection.State.STOPPED
         carConnection.type.removeObserver(carObserver)
         runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(networkCallback) }
         sse.stop()
@@ -119,6 +122,7 @@ class BridgeService : Service(), SseConnection.Listener {
         get() = if (micActive) "$connection · microphone ready" else connection
 
     override fun onState(state: SseConnection.State) {
+        app.connection.value = state
         connection = when (state) {
             SseConnection.State.CONNECTED -> "Connected to your Mac"
             SseConnection.State.CONNECTING -> "Connecting to your Mac…"
@@ -140,11 +144,14 @@ class BridgeService : Service(), SseConnection.Listener {
             if (event.kind == "open") voice?.onOpened(event.sessionId, event.title)
             when (result) {
                 ApplyResult.STATUS -> voice?.onTurn(event.sessionId, running = event.kind == "turn_start")
-                ApplyResult.NEW_INCOMING -> if (voice != null && voice.handles(event.sessionId)) {
-                    app.repo.markRead(event.sessionId)
-                    voice.onIncoming(event.sessionId, event.text, fromClaude = event.role == "claude")
-                } else {
-                    app.notifier.showConversation(event.sessionId, alert = true)
+                ApplyResult.NEW_INCOMING -> when {
+                    voice != null && voice.handles(event.sessionId) -> {
+                        app.repo.markRead(event.sessionId)
+                        voice.onIncoming(event.sessionId, event.text, fromClaude = event.role == "claude")
+                    }
+                    // Already on screen.
+                    app.visibleChat == event.sessionId -> app.repo.markRead(event.sessionId)
+                    else -> app.notifier.showConversation(event.sessionId, alert = true)
                 }
                 else -> {}
             }

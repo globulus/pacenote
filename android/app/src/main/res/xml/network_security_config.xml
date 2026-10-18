@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The app talks plain HTTP to the Mac only inside the tailnet, where Tailscale
+     encrypts it. Android can't express "any Tailscale address" here (100.64.0.0/10),
+     so BridgeClient enforces it in code (Pairing.allowedServiceUrl). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -1,5 +1,7 @@
 package com.theglobulus.pacenote.net
 
+import com.theglobulus.pacenote.BuildConfig
+import com.theglobulus.pacenote.data.Pairing
 import com.theglobulus.pacenote.data.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,8 +23,18 @@ class BridgeClient(private val settings: Settings) {
         .build()
 
     fun request(path: String): Request.Builder = Request.Builder()
-        .url(settings.bridgeUrl + path)
+        .url(serviceUrl() + path)
         .header("Authorization", "Bearer ${settings.token}")
+
+    /** The paired Mac's address; refuses anything outside the tailnet (see [Pairing.allowedServiceUrl]). */
+    private fun serviceUrl(): String {
+        val url = settings.bridgeUrl
+        check(url.isNotBlank()) { "Not paired yet: tap Scan QR code." }
+        check(Pairing.allowedServiceUrl(url, allowLocal = BuildConfig.DEBUG)) {
+            "Pacenote only talks to your Mac over Tailscale: pair again with the QR code."
+        }
+        return url
+    }
 
     suspend fun postMessage(id: String, sessionId: String, text: String): PostResult =
         post("/message", JSONObject().put("id", id).put("session_id", sessionId).put("text", text))
@@ -38,6 +50,21 @@ class BridgeClient(private val settings: Settings) {
                 SessionListParser.parse(res.body.string())
             }
         }.recoverCatching { throw IllegalStateException(describe(it)) }
+    }
+
+    /** Something wrong at the Mac worth showing, or null (also null when it can't be reached). */
+    suspend fun healthProblem(): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            http.newCall(request("/health").get().build()).execute().use { res ->
+                if (!res.isSuccessful) return@use null
+                val o = JSONObject(res.body.string())
+                if (o.has("documents_access") && !o.isNull("documents_access") && !o.getBoolean("documents_access")) {
+                    "macOS is blocking the Pacenote service from your Documents folder. At the Mac, allow bun in Privacy & Security."
+                } else {
+                    null
+                }
+            }
+        }.getOrNull()
     }
 
     /** A one-line, human-readable result of GET /health. */
