@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Manage the claude-car background service.
+# Manage the Pacenote background service.
 #
 #   scripts/service.sh status | restart | stop | start | logs | uninstall
 set -euo pipefail
 
-LABEL="com.theglobulus.claude-car"
+LABEL="com.theglobulus.pacenote"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
-CAR_HOME="${CLAUDE_CAR_HOME:-$HOME/.claude-car}"
+PACENOTE_HOME="${PACENOTE_HOME:-$HOME/.pacenote}"
 DOMAIN="gui/$(id -u)"
 
 case "${1:-status}" in
@@ -20,10 +20,10 @@ case "${1:-status}" in
   restart) launchctl kickstart -k "$DOMAIN/$LABEL" && echo restarted ;;
   stop) launchctl bootout "$DOMAIN/$LABEL" && echo "stopped (starts again at login; 'start' to start now)" ;;
   start) launchctl bootstrap "$DOMAIN" "$PLIST" && echo started ;;
-  logs) tail -n 50 -f "$CAR_HOME/bridge.log" ;;
+  logs) tail -n 50 -f "$PACENOTE_HOME/bridge.log" ;;
   uninstall)
     launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
     rm -f "$PLIST"
-    echo "uninstalled (your token in $CAR_HOME is kept)" ;;
+    echo "uninstalled (your token in $PACENOTE_HOME is kept)" ;;
   *) sed -n '2,4p' "$0"; exit 1 ;;
 esac

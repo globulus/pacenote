@@ -4,14 +4,15 @@
 #   scripts/smoke.sh health
 #   scripts/smoke.sh sessions                       # recent sessions as JSON
 #   scripts/smoke.sh events [last-event-id]         # stream everything (Ctrl-C to stop)
-#   scripts/smoke.sh say hub "list sessions"        # talk to the Claude Car hub
+#   scripts/smoke.sh say hub "list sessions"        # talk to the Pacenote hub
 #   scripts/smoke.sh say <session-id> "run the tests"
 #   scripts/smoke.sh noauth                         # should print 401
 set -euo pipefail
 
-CAR_HOME="${CLAUDE_CAR_HOME:-$HOME/.claude-car}"
-URL="${CAR_URL:-http://${CAR_BIND:-100.122.179.88}:${CAR_PORT:-8788}}"
-H=(-H @"$CAR_HOME/auth-header")
+PACENOTE_HOME="${PACENOTE_HOME:-$HOME/.pacenote}"
+URL="${PACENOTE_URL:-$(cat "$PACENOTE_HOME/url" 2>/dev/null || true)}"
+[[ -n "$URL" ]] || { echo "No $PACENOTE_HOME/url: run scripts/setup.sh first (or set PACENOTE_URL)." >&2; exit 1; }
+H=(-H @"$PACENOTE_HOME/auth-header")
 
 case "${1:-health}" in
   health) curl -s "${H[@]}" "$URL/health"; echo ;;

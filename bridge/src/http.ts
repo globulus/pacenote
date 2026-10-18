@@ -19,7 +19,7 @@ export type HttpDeps = {
   startedAt?: number
   /** Whether macOS lets the service read ~/Documents (null until checked). */
   documentsAccess?: () => boolean | null
-  /** Holds claude-car.apk and version.json for in-app updates. */
+  /** Holds pacenote.apk and version.json for in-app updates. */
   appDir?: string
 }
 
@@ -105,7 +105,7 @@ export function createHandler(deps: HttpDeps): (req: Request) => Promise<Respons
   }
 
   async function appApk(): Promise<Response> {
-    const file = deps.appDir ? Bun.file(join(deps.appDir, 'claude-car.apk')) : null
+    const file = deps.appDir ? Bun.file(join(deps.appDir, 'pacenote.apk')) : null
     if (!file || !(await file.exists())) return json(404, { error: 'no app published' })
     return new Response(file, {
       headers: { 'content-type': 'application/vnd.android.package-archive', 'content-length': String(file.size) },

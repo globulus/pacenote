@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10z" fill="#F2A541"/>
+    </marker>
+    <path id="bubble" d="M4,3h40a4,4 0,0 1,4 4v26a4,4 0,0 1,-4 4H18l-10,8v-8H4a4,4 0,0 1,-4 -4V7a4,4 0,0 1,4 -4zM12,20a4,4 0,1 0,8 0a4,4 0,1 0,-8 0zM28,20a4,4 0,1 0,8 0a4,4 0,1 0,-8 0z"/>
+  </defs>
+  <rect width="1200" height="400" rx="24" fill="#1A1918"/>
+
+  <!-- 1. You -->
+  <g transform="translate(40 60)">
+    <rect width="220" height="250" rx="20" fill="#24231F" stroke="#3A3834"/>
+    <g transform="translate(110 78)" fill="none" stroke="#E8E6DF" stroke-width="7">
+      <circle r="40"/>
+      <circle r="9" fill="#E8E6DF" stroke="none"/>
+      <path d="M-40,0 H-9 M9,0 H40 M0,9 V40"/>
+    </g>
+    <text x="110" y="160" font-size="22" font-weight="700" fill="#F5F4EE" text-anchor="middle">You, driving</text>
+    <text x="110" y="190" font-size="15" fill="#A8A49B" text-anchor="middle">Pick a session,</text>
+    <text x="110" y="211" font-size="15" fill="#A8A49B" text-anchor="middle">press play, talk</text>
+  </g>
+
+  <!-- 2. Car -->
+  <g transform="translate(330 60)">
+    <rect width="220" height="250" rx="20" fill="#24231F" stroke="#3A3834"/>
+    <rect x="50" y="42" width="120" height="74" rx="12" fill="#0C0C0B" stroke="#E8E6DF" stroke-width="4"/>
+    <use href="#bubble" transform="translate(94 62) scale(0.68)" fill="#F2A541"/>
+    <rect x="96" y="116" width="28" height="12" fill="#E8E6DF"/>
+    <text x="110" y="160" font-size="22" font-weight="700" fill="#F5F4EE" text-anchor="middle">Android Auto</text>
+    <text x="110" y="190" font-size="15" fill="#A8A49B" text-anchor="middle">Pacenote is an</text>
+    <text x="110" y="211" font-size="15" fill="#A8A49B" text-anchor="middle">audio app in your car</text>
+  </g>
+
+  <!-- 3. Phone -->
+  <g transform="translate(620 60)">
+    <rect width="220" height="250" rx="20" fill="#24231F" stroke="#3A3834"/>
+    <rect x="84" y="30" width="52" height="96" rx="10" fill="#0C0C0B" stroke="#E8E6DF" stroke-width="4"/>
+    <use href="#bubble" transform="translate(97 62) scale(0.54)" fill="#F2A541"/>
+    <text x="110" y="160" font-size="22" font-weight="700" fill="#F5F4EE" text-anchor="middle">Your phone</text>
+    <text x="110" y="190" font-size="15" fill="#A8A49B" text-anchor="middle">Speech ⇄ text, on</text>
+    <text x="110" y="211" font-size="15" fill="#A8A49B" text-anchor="middle">the phone itself</text>
+  </g>
+
+  <!-- 4. Mac -->
+  <g transform="translate(910 60)">
+    <rect width="250" height="250" rx="20" fill="#24231F" stroke="#3A3834"/>
+    <rect x="67" y="38" width="116" height="74" rx="8" fill="#0C0C0B" stroke="#E8E6DF" stroke-width="4"/>
+    <path d="M52,112 H198 L188,126 H62z" fill="#E8E6DF"/>
+    <text x="85" y="72" font-size="15" font-family="ui-monospace, Menlo, monospace" fill="#F2A541">&gt;_</text>
+    <text x="125" y="160" font-size="22" font-weight="700" fill="#F5F4EE" text-anchor="middle">Your Mac</text>
+    <text x="125" y="190" font-size="15" fill="#A8A49B" text-anchor="middle">Resumes the session:</text>
+    <text x="125" y="214" font-size="14" font-family="ui-monospace, Menlo, monospace" fill="#C9C5BA" text-anchor="middle">claude -p --resume</text>
+  </g>
+
+  <!-- arrows -->
+  <g stroke="#F2A541" stroke-width="3" fill="none" marker-end="url(#arrow)" marker-start="url(#arrow)">
+    <path d="M268,185 H322"/>
+    <path d="M558,185 H612"/>
+    <path d="M848,185 H902"/>
+  </g>
+  <g font-size="14" fill="#F2A541" text-anchor="middle">
+    <text x="295" y="172">voice</text>
+    <text x="585" y="172">USB or</text>
+    <text x="585" y="209">wireless</text>
+    <text x="875" y="172">Tailscale</text>
+    <text x="875" y="209">encrypted</text>
+  </g>
+
+  <text x="600" y="358" font-size="16" fill="#A8A49B" text-anchor="middle">Any Claude Code session on the Mac, from any folder, including desktop-app sessions. Nothing to start per session.</text>
+</svg>

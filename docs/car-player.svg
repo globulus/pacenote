@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <path id="bubble" d="M4,3h40a4,4 0,0 1,4 4v26a4,4 0,0 1,-4 4H18l-10,8v-8H4a4,4 0,0 1,-4 -4V7a4,4 0,0 1,4 -4zM12,20a4,4 0,1 0,8 0a4,4 0,1 0,-8 0zM28,20a4,4 0,1 0,8 0a4,4 0,1 0,-8 0z"/>
+  </defs>
+  <!-- bezel and screen -->
+  <rect width="960" height="520" rx="36" fill="#050505"/>
+  <rect x="16" y="16" width="928" height="488" rx="24" fill="#111110" stroke="#2E2D2A"/>
+  <!-- rail -->
+  <rect x="16" y="16" width="92" height="488" rx="24" fill="#191918"/>
+  <g fill="#6F6C66">
+    <circle cx="62" cy="74" r="14"/>
+    <path d="M62,118 l15,32 -15,-9 -15,9z"/>
+    <circle cx="62" cy="200" r="14" fill="none" stroke="#6F6C66" stroke-width="4"/>
+  </g>
+  <rect x="38" y="236" width="48" height="48" rx="14" fill="#F2A541" fill-opacity="0.2"/>
+  <use href="#bubble" transform="translate(47 247) scale(0.62)" fill="#F2A541"/>
+  <text x="62" y="478" font-size="17" fill="#A8A49B" text-anchor="middle">9:41</text>
+
+  <!-- now playing -->
+  <rect x="140" y="48" width="160" height="160" rx="20" fill="#1F1E1D"/>
+  <use href="#bubble" transform="translate(174 84) scale(1.92)" fill="#F2A541"/>
+  <text x="140" y="250" font-size="30" font-weight="700" fill="#F5F4EE">Refund bug</text>
+  <text x="140" y="282" font-size="18" fill="#E8E6DF">Fixed. All 48 tests pass.</text>
+  <text x="140" y="308" font-size="16" fill="#A8A49B">payments-api</text>
+
+  <!-- controls -->
+  <g>
+    <circle cx="170" cy="420" r="30" fill="#1F1E1D"/>
+    <path transform="translate(154 404) scale(1.33)" fill="#E8E6DF" d="M12,5V1L7,6l5,5V7c3.31,0 6,2.69 6,6s-2.69,6 -6,6 -6,-2.69 -6,-6H4c0,4.42 3.58,8 8,8s8,-3.58 8,-8 -3.58,-8 -8,-8z"/>
+    <text x="170" y="474" font-size="14" fill="#A8A49B" text-anchor="middle">Repeat</text>
+
+    <circle cx="270" cy="420" r="40" fill="#F2A541"/>
+    <path transform="translate(250 400) scale(1.67)" fill="#1A1918" d="M8,5v14l11,-7z"/>
+    <text x="270" y="482" font-size="14" fill="#A8A49B" text-anchor="middle">Play</text>
+
+    <circle cx="370" cy="420" r="30" fill="#1F1E1D"/>
+    <path transform="translate(354 404) scale(1.33)" fill="#E8E6DF" d="M12,14c1.66,0 2.99,-1.34 2.99,-3L15,5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3 -2.54,5.1 -5.3,5.1S6.7,14 6.7,11H5c0,3.41 2.72,6.23 6,6.72V21h2v-3.28c3.28,-0.48 6,-3.3 6,-6.72h-1.7z"/>
+    <text x="370" y="474" font-size="14" fill="#A8A49B" text-anchor="middle">Talk</text>
+  </g>
+
+  <!-- queue -->
+  <rect x="452" y="40" width="468" height="440" rx="18" fill="#1A1918" stroke="#2E2D2A"/>
+  <text x="476" y="76" font-size="18" font-weight="700" fill="#F5F4EE">Refund bug</text>
+  <text x="896" y="76" font-size="15" fill="#A8A49B" text-anchor="end">Queue</text>
+  <rect x="476" y="92" width="420" height="1" fill="#2E2D2A"/>
+  <g font-size="16">
+    <text x="476" y="124" fill="#F5F4EE">Run the checkout tests and tell me what failed.</text>
+    <text x="476" y="146" font-size="13" fill="#A8A49B">You</text>
+
+    <text x="476" y="184" fill="#F5F4EE">Two of 48 tests failed, both in the coupon flow.</text>
+    <text x="476" y="206" font-size="13" fill="#A8A49B">Claude</text>
+
+    <text x="476" y="244" fill="#F5F4EE">An expired coupon is still accepted at checkout.</text>
+    <text x="476" y="266" font-size="13" fill="#A8A49B">Claude</text>
+
+    <text x="476" y="304" fill="#F5F4EE">Want me to fix it?</text>
+    <text x="476" y="326" font-size="13" fill="#A8A49B">Claude</text>
+
+    <text x="476" y="364" fill="#F5F4EE">Yes, fix it and run them again.</text>
+    <text x="476" y="386" font-size="13" fill="#A8A49B">You</text>
+
+    <rect x="464" y="400" width="444" height="56" rx="10" fill="#F2A541" fill-opacity="0.16"/>
+    <text x="476" y="424" fill="#F5F4EE">Fixed. All 48 tests pass.</text>
+    <text x="476" y="446" font-size="13" fill="#F2A541">Claude</text>
+  </g>
+</svg>

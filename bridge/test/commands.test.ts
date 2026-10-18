@@ -27,15 +27,15 @@ describe('ordinal', () => {
 
 describe('matchSession', () => {
   const sessions = [
-    { id: 'a', title: 'Android Auto Claude voice interface', folder: 'claude-car' },
+    { id: 'a', title: 'Android Auto Claude voice interface', folder: 'pacenote' },
     { id: 'b', title: 'Refund bug', folder: 'payments-api' },
-    { id: 'c', title: 'Topic 1: Globuli for other agent clusters', folder: 'Globuli' },
+    { id: 'c', title: 'Topic 1: Webshop for other markets', folder: 'Webshop' },
   ]
   test('by number in the last list', () => expect(matchSession('two', sessions, ['c', 'b'])?.id).toBe('b'))
   test('by number without a list', () => expect(matchSession('3', sessions)?.id).toBe('c'))
   test('by title words', () => expect(matchSession('android auto', sessions)?.id).toBe('a'))
   test('by folder', () => expect(matchSession('payments api', sessions)?.id).toBe('b'))
-  test('by partial word', () => expect(matchSession('globuli', sessions)?.id).toBe('c'))
+  test('by partial word', () => expect(matchSession('webshop', sessions)?.id).toBe('c'))
   test('no match', () => expect(matchSession('kubernetes', sessions)).toBeNull())
   test('title words beat folder words', () => {
     const similar = [
@@ -47,8 +47,8 @@ describe('matchSession', () => {
 })
 
 describe('matchFolder', () => {
-  const cwds = ['/Users/g/GitHub/claude-car', '/Users/g/GitHub/Globuli', '/Users/g/GitHub/Globuli-orchestrator']
-  test('spoken name to folder', () => expect(matchFolder('claude car', cwds)).toBe('/Users/g/GitHub/claude-car'))
-  test('exact beats longer', () => expect(matchFolder('globuli', cwds)).toBe('/Users/g/GitHub/Globuli'))
+  const cwds = ['/Users/me/code/road-trip', '/Users/me/code/Webshop', '/Users/me/code/Webshop-admin']
+  test('spoken name to folder', () => expect(matchFolder('road trip', cwds)).toBe('/Users/me/code/road-trip'))
+  test('exact beats longer', () => expect(matchFolder('webshop', cwds)).toBe('/Users/me/code/Webshop'))
   test('unknown', () => expect(matchFolder('nothing here', cwds)).toBeNull())
 })

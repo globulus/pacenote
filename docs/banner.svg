@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" width="1280" height="420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <radialGradient id="glow" cx="78%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#F2A541" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#F2A541" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#151413"/>
+      <stop offset="1" stop-color="#0C0C0B"/>
+    </linearGradient>
+    <path id="bubble" d="M4,3h40a4,4 0,0 1,4 4v26a4,4 0,0 1,-4 4H18l-10,8v-8H4a4,4 0,0 1,-4 -4V7a4,4 0,0 1,4 -4zM12,20a4,4 0,1 0,8 0a4,4 0,1 0,-8 0zM28,20a4,4 0,1 0,8 0a4,4 0,1 0,-8 0z"/>
+  </defs>
+
+  <rect width="1280" height="420" rx="24" fill="#1A1918"/>
+  <rect width="1280" height="420" rx="24" fill="url(#glow)"/>
+
+  <!-- Title -->
+  <use href="#bubble" transform="translate(80 70) scale(1.5)" fill="#F2A541"/>
+  <text x="80" y="210" font-size="72" font-weight="700" fill="#F5F4EE" letter-spacing="-1.5">Pacenote</text>
+  <text x="82" y="258" font-size="25" fill="#C9C5BA">Talk to your Claude Code sessions</text>
+  <text x="82" y="292" font-size="25" fill="#C9C5BA">from Android Auto. Hands-free.</text>
+
+  <g font-size="15" fill="#F5F4EE">
+    <rect x="80" y="330" width="150" height="36" rx="18" fill="#2B2A27" stroke="#45433F"/>
+    <text x="155" y="353" text-anchor="middle">Any session</text>
+    <rect x="242" y="330" width="182" height="36" rx="18" fill="#2B2A27" stroke="#45433F"/>
+    <text x="333" y="353" text-anchor="middle">Replies read aloud</text>
+    <rect x="436" y="330" width="206" height="36" rx="18" fill="#2B2A27" stroke="#45433F"/>
+    <text x="539" y="353" text-anchor="middle">Private via Tailscale</text>
+  </g>
+
+  <!-- Car display -->
+  <g>
+    <rect x="696" y="56" width="528" height="308" rx="30" fill="#050505"/>
+    <rect x="708" y="68" width="504" height="284" rx="20" fill="url(#screen)" stroke="#2E2D2A"/>
+    <!-- rail -->
+    <rect x="708" y="68" width="64" height="284" rx="20" fill="#121211"/>
+    <g fill="#6F6C66">
+      <circle cx="740" cy="106" r="11"/>
+      <path d="M740,140 l12,26 -12,-7 -12,7z"/>
+      <circle cx="740" cy="200" r="11" fill="none" stroke="#6F6C66" stroke-width="3"/>
+    </g>
+    <rect x="722" y="226" width="36" height="36" rx="10" fill="#F2A541" fill-opacity="0.18"/>
+    <use href="#bubble" transform="translate(728 233) scale(0.5)" fill="#F2A541"/>
+    <text x="740" y="334" font-size="13" fill="#A8A49B" text-anchor="middle">9:41</text>
+
+    <!-- now playing -->
+    <rect x="796" y="96" width="118" height="118" rx="16" fill="#1F1E1D"/>
+    <use href="#bubble" transform="translate(823 124) scale(1.33)" fill="#F2A541"/>
+    <text x="936" y="128" font-size="28" font-weight="700" fill="#F5F4EE">Refund bug</text>
+    <text x="936" y="158" font-size="17" fill="#F2A541">Listening…</text>
+    <text x="936" y="183" font-size="14" fill="#A8A49B">payments-api</text>
+    <g fill="#F2A541">
+      <rect x="936" y="200" width="5" height="10" rx="2.5"/>
+      <rect x="946" y="194" width="5" height="22" rx="2.5"/>
+      <rect x="956" y="188" width="5" height="34" rx="2.5"/>
+      <rect x="966" y="196" width="5" height="18" rx="2.5"/>
+      <rect x="976" y="191" width="5" height="28" rx="2.5"/>
+      <rect x="986" y="199" width="5" height="12" rx="2.5"/>
+      <rect x="996" y="193" width="5" height="24" rx="2.5"/>
+      <rect x="1006" y="197" width="5" height="16" rx="2.5"/>
+      <rect x="1016" y="201" width="5" height="8" rx="2.5"/>
+    </g>
+
+    <!-- controls -->
+    <g transform="translate(0 0)">
+      <circle cx="850" cy="292" r="26" fill="#1F1E1D"/>
+      <path transform="translate(836 278) scale(1.17)" fill="#E8E6DF" d="M12,5V1L7,6l5,5V7c3.31,0 6,2.69 6,6s-2.69,6 -6,6 -6,-2.69 -6,-6H4c0,4.42 3.58,8 8,8s8,-3.58 8,-8 -3.58,-8 -8,-8z"/>
+      <circle cx="960" cy="292" r="34" fill="#F2A541"/>
+      <path transform="translate(943 275) scale(1.42)" fill="#1A1918" d="M6,19h4V5H6v14zm8,-14v14h4V5h-4z"/>
+      <circle cx="1070" cy="292" r="26" fill="#1F1E1D"/>
+      <path transform="translate(1056 278) scale(1.17)" fill="#E8E6DF" d="M12,14c1.66,0 2.99,-1.34 2.99,-3L15,5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3 -2.54,5.1 -5.3,5.1S6.7,14 6.7,11H5c0,3.41 2.72,6.23 6,6.72V21h2v-3.28c3.28,-0.48 6,-3.3 6,-6.72h-1.7z"/>
+      <circle cx="1160" cy="292" r="26" fill="#1F1E1D"/>
+      <path transform="translate(1146 278) scale(1.17)" fill="#E8E6DF" d="M6,6h12v12H6z"/>
+    </g>
+  </g>
+</svg>

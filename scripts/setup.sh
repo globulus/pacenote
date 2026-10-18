@@ -1,47 +1,63 @@
 #!/usr/bin/env bash
-# Installs the claude-car service on this Mac: a background service (launchd)
+# Installs the Pacenote service on this Mac: a background service (launchd)
 # that starts at login and lets the phone talk to any Claude Code session.
 # Safe to re-run; re-run it after moving this folder or changing options.
 #
 # Options (env):
-#   CAR_MODEL=sonnet               model for car turns (default: your Claude Code default)
-#   CAR_EFFORT=low                 effort for car turns
-#   CAR_PERMISSION_MODE=auto       permission mode for car turns (default auto)
+#   PACENOTE_MODEL=sonnet               model for car turns (default: your Claude Code default)
+#   PACENOTE_EFFORT=low                 effort for car turns
+#   PACENOTE_PERMISSION_MODE=auto       permission mode for car turns (default auto)
+#   PACENOTE_PORT=8788                  port on the Mac's Tailscale address
 set -euo pipefail
 
+[[ "$(uname)" == Darwin ]] || { echo "The Pacenote service runs on macOS (it uses launchd)." >&2; exit 1; }
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CAR_HOME="${CLAUDE_CAR_HOME:-$HOME/.claude-car}"
-LABEL="com.theglobulus.claude-car"
+PACENOTE_HOME="${PACENOTE_HOME:-$HOME/.pacenote}"
+LABEL="com.theglobulus.pacenote"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+PORT="${PACENOTE_PORT:-8788}"
 BUN="$(command -v bun || echo "$HOME/.bun/bin/bun")"
 CLAUDE="$(command -v claude || true)"
 [[ -x "$BUN" ]] || { echo "bun not found: install it from https://bun.sh" >&2; exit 1; }
-[[ -n "$CLAUDE" ]] || { echo "claude not found on PATH" >&2; exit 1; }
+[[ -n "$CLAUDE" ]] || { echo "claude not found on PATH: install Claude Code and sign in first" >&2; exit 1; }
+
+# The service listens on this Mac's Tailscale address only.
+TS_IP=""
+TS_CLI=""
+for ts in tailscale /Applications/Tailscale.app/Contents/MacOS/Tailscale /opt/homebrew/bin/tailscale /usr/local/bin/tailscale; do
+  TS_IP="$("$ts" ip -4 2>/dev/null | head -1 || true)"
+  if [[ "$TS_IP" =~ ^100\. ]]; then TS_CLI="$ts"; break; fi
+  TS_IP=""
+done
+[[ -n "$TS_IP" ]] || { echo "Can't find this Mac's Tailscale address: install Tailscale, sign in and connect, then re-run." >&2; exit 1; }
+# The phone reaches the Mac by its MagicDNS name when there is one: the prebuilt
+# app may only use plain HTTP to *.ts.net names (and Tailscale encrypts it).
+TS_NAME="$("$TS_CLI" status --json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("Self",{}).get("DNSName","").rstrip("."))' 2>/dev/null || true)"
+HOST="${TS_NAME:-$TS_IP}"
 
 umask 077
-mkdir -p "$CAR_HOME"
-chmod 700 "$CAR_HOME"
-if [[ ! -s "$CAR_HOME/token" ]]; then
-  openssl rand -hex 32 > "$CAR_HOME/token"
-  echo "Created a new token in $CAR_HOME/token (rebuild the Android app to pick it up)"
+mkdir -p "$PACENOTE_HOME"
+chmod 700 "$PACENOTE_HOME"
+if [[ ! -s "$PACENOTE_HOME/token" ]]; then
+  openssl rand -hex 32 > "$PACENOTE_HOME/token"
+  echo "Created a new token in $PACENOTE_HOME/token (rebuild the Android app to pick it up)"
 fi
-chmod 600 "$CAR_HOME/token"
+chmod 600 "$PACENOTE_HOME/token"
 # curl -H @file keeps the token out of `ps` output.
-printf 'Authorization: Bearer %s\n' "$(cat "$CAR_HOME/token")" > "$CAR_HOME/auth-header"
-chmod 600 "$CAR_HOME/auth-header"
+printf 'Authorization: Bearer %s\n' "$(cat "$PACENOTE_HOME/token")" > "$PACENOTE_HOME/auth-header"
+chmod 600 "$PACENOTE_HOME/auth-header"
+# Where the phone reaches the service; the Android build reads this (and the token).
+echo "http://$HOST:$PORT" > "$PACENOTE_HOME/url"
 
 (cd "$ROOT/bridge" && "$BUN" install --frozen-lockfile --no-summary)
 
 # macOS keeps background services out of ~/Documents (where this repo lives),
 # so the service runs from a copy. Re-run setup after changing bridge/src.
-SERVICE="$CAR_HOME/service"
+SERVICE="$PACENOTE_HOME/service"
 mkdir -p "$SERVICE"
 rsync -a --delete "$ROOT/bridge/src/" "$SERVICE/src/"
 cp "$ROOT/bridge/package.json" "$SERVICE/package.json"
-
-# Clean up the earlier channel-based version, if it was installed.
-claude mcp remove -s user car >/dev/null 2>&1 || true
-rm -f "$CAR_HOME/session-settings.json" "$CAR_HOME/mcp.json" "$CAR_HOME/bridge.pid"
 
 xml() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' <<<"$1"; }
 env_entry() { [[ -n "${2:-}" ]] && printf '    <key>%s</key><string>%s</string>\n' "$1" "$(xml "$2")"; return 0; }
@@ -62,16 +78,17 @@ cat > "$PLIST" <<EOF
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key><string>$(xml "$(dirname "$CLAUDE"):$(dirname "$BUN"):/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin")</string>
-    <key>CAR_CLAUDE_BIN</key><string>$(xml "$CLAUDE")</string>
-$(env_entry CAR_MODEL "${CAR_MODEL:-}")
-$(env_entry CAR_EFFORT "${CAR_EFFORT:-}")
-$(env_entry CAR_PERMISSION_MODE "${CAR_PERMISSION_MODE:-}")
+    <key>PACENOTE_CLAUDE_BIN</key><string>$(xml "$CLAUDE")</string>
+    <key>PACENOTE_PORT</key><string>$(xml "$PORT")</string>
+$(env_entry PACENOTE_MODEL "${PACENOTE_MODEL:-}")
+$(env_entry PACENOTE_EFFORT "${PACENOTE_EFFORT:-}")
+$(env_entry PACENOTE_PERMISSION_MODE "${PACENOTE_PERMISSION_MODE:-}")
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>ProcessType</key><string>Interactive</string>
-  <key>StandardOutPath</key><string>$(xml "$CAR_HOME/service.log")</string>
-  <key>StandardErrorPath</key><string>$(xml "$CAR_HOME/service.log")</string>
+  <key>StandardOutPath</key><string>$(xml "$PACENOTE_HOME/service.log")</string>
+  <key>StandardErrorPath</key><string>$(xml "$PACENOTE_HOME/service.log")</string>
 </dict>
 </plist>
 EOF
@@ -84,6 +101,8 @@ for _ in $(seq 1 20); do
   sleep 0.25
 done
 launchctl bootstrap "gui/$(id -u)" "$PLIST" || { sleep 2; launchctl bootstrap "gui/$(id -u)" "$PLIST"; }
-echo "Installed and started the claude-car service ($PLIST)."
+echo "Installed and started the Pacenote service on http://$HOST:$PORT ($PLIST)."
 echo "If your projects are in Documents, Desktop or Downloads, macOS may ask to let \"bun\" access them: allow it."
 echo "Check it with: $ROOT/scripts/service.sh status"
+[[ -n "$TS_NAME" ]] || echo "Note: MagicDNS is off in your tailnet, so the prebuilt app can't connect. Turn it on in the Tailscale admin console, or build the app yourself."
+"$BUN" "$ROOT/bridge/src/pair.ts"

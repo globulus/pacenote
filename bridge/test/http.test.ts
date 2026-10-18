@@ -145,7 +145,7 @@ describe('GET /app', () => {
     const get = (path: string, headers: Record<string, string> = auth) => h(new Request(BASE + path, { headers }))
     expect((await get('/app')).status).toBe(404)
     writeFileSync(join(dir, 'version.json'), JSON.stringify({ version_code: 42, version_name: '0.2.0' }))
-    writeFileSync(join(dir, 'claude-car.apk'), 'PK-fake-apk')
+    writeFileSync(join(dir, 'pacenote.apk'), 'PK-fake-apk')
     expect(await (await get('/app')).json()).toEqual({ version_code: 42, version_name: '0.2.0' })
     const apk = await get('/app/apk')
     expect(apk.headers.get('content-type')).toBe('application/vnd.android.package-archive')
@@ -187,5 +187,15 @@ describe('GET /events', () => {
     expect(frames.filter(f => f === ': ping').length).toBeGreaterThanOrEqual(1)
     await Bun.sleep(30)
     expect(events.listenerCount).toBe(0)
+  })
+})
+
+describe('pairing link', () => {
+  test('carries the address and token, encoded', async () => {
+    const { pairingLink } = await import('../src/pair')
+    const link = pairingLink('http://mac.tail123.ts.net:8788', 'ab'.repeat(32))
+    expect(link).toBe(`pacenote://pair?url=http%3A%2F%2Fmac.tail123.ts.net%3A8788&token=${'ab'.repeat(32)}`)
+    const u = new URL(link)
+    expect(u.searchParams.get('url')).toBe('http://mac.tail123.ts.net:8788')
   })
 })

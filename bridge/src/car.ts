@@ -7,7 +7,7 @@ import type { SessionInfo } from './sessions'
 import { toSpeech } from './speech'
 
 export const HUB = 'hub'
-export const HUB_TITLE = 'Claude Car'
+export const HUB_TITLE = 'Pacenote'
 
 // A session written to this recently by something other than us is probably
 // in use at the Mac right now, even if we couldn't see its process.

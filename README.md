@@ -1,177 +1,294 @@
-# claude-car
+<p align="center">
+  <img src="docs/banner.svg" alt="Pacenote: talk to your Claude Code sessions from Android Auto" width="100%">
+</p>
 
-Talk to any of your Claude Code sessions on your Mac from Android Auto. You speak, and Claude's replies are read aloud.
+**Pacenote** lets you talk to the Claude Code sessions on your Mac while you drive. Pick a session on the car's screen, press play, and speak. Claude works on it in that session's folder on your Mac, and reads its reply to you through the car's speakers. Then it listens for your follow-up.
 
-```
-Car (Android Auto)  ⇄  phone app: the "Claude Car" audio app (pick a session, press play, talk)
-                       + one message conversation per session
-                    ⇄  HTTP/SSE over Tailscale (100.122.179.88:8788, bearer token)
-                    ⇄  claude-car service on the Mac (launchd, starts at login)
-                    ⇄  claude -p --resume <session> …   one headless turn per message, in that session's folder
-```
+It works with every session on your Mac, from the terminal or the Claude desktop app, in any folder. There's nothing to start per session: a small background service on the Mac resumes whichever one you pick.
+
+> [!NOTE]
+> Pacenote is an independent, unofficial project that works with Claude Code. It is not made, endorsed or supported by Anthropic or Google. In rallying, the co-driver reads the pace notes aloud so the driver can keep their eyes on the road; Pacenote does that for Claude.
+
+## Contents
+
+- [What you get](#what-you-get)
+- [How it works](#how-it-works)
+- [Requirements](#requirements)
+- [Install](#install)
+- [Use it](#use-it)
+- [Settings](#settings)
+- [Updating](#updating)
+- [Security and privacy](#security-and-privacy)
+- [Troubleshooting](#troubleshooting)
+- [Limitations](#limitations)
+- [Development](#development)
+
+## What you get
+
+- **An audio app in Android Auto.** Pacenote sits next to your music apps. It lists your sessions, and you can start a new one in any folder you've used Claude Code in.
+- **A hands-free loop.** Pick a session and speak after the beep. While Claude works, a spinner shows (and your music can play). Its whole reply is read aloud, then it beeps and listens again.
+- **Your phone does the speech.** Recognition and reading aloud run on the phone, so Pacenote doesn't depend on Google Assistant or Gemini.
+- **Safe with sessions you have open.** If a session is open on the Mac, the car continues in a copy named "… (car)", so two processes never write to one conversation.
+- **Built for driving.** Claude is asked to answer in one to three short spoken sentences, without markdown or code, and to tell you before long work.
+- **A phone app too.** Browse your sessions, type to one, or start one when you're not driving.
+
+<p align="center">
+  <img src="docs/car-sessions.svg" alt="Illustration: the Pacenote session list in Android Auto" width="49%">
+  <img src="docs/car-player.svg" alt="Illustration: the Pacenote player with the conversation queue" width="49%">
+  <br><sub>Illustrations of the car screens: your sessions, and a conversation in progress.</sub>
+</p>
 
 ## How it works
 
-- **Sessions:** the service lists your recent Claude Code sessions from `~/.claude/projects`, across all folders, including sessions from the desktop app.
-- **Turns:** when you talk to a session, the service resumes it headless with Claude Code's own print mode, in the session's folder. Claude's text comes back to the car.
-- **Nothing to start per session.** There are no channels and no tmux. The service is installed once and runs in the background.
-- **In Android Auto, Claude Car is an audio app** (next to Spotify and the like). It lists your sessions; pick one, press play and talk. The phone's own speech recognition turns what you say into text, and the app reads Claude's whole reply aloud. It doesn't use Gemini or Android Auto's message reply, so it works with Google Workspace accounts too (whose message replies Android Auto currently blocks).
-- **Each session is also a message conversation**, from a contact named after the session, for replying through Android Auto's own voice reply when that works.
-- **The Claude Car message conversation takes commands:**
-  - "list sessions"
-  - "open two" or "open refund bug"
-  - "new session in payments"
-- **Sessions open on the Mac:** if a session is open in the desktop app or a terminal (or was just active), the car continues in a copy named "… (car)". Two processes never write to the same conversation.
-- **Permissions:** turns run in **auto** permission mode, since nobody can answer prompts while you drive. Safe actions go ahead, and risky ones are blocked; Claude tells you, and you can do them at the Mac.
+<p align="center">
+  <img src="docs/how-it-works.svg" alt="You talk to Android Auto; the Pacenote app on your phone turns speech into text and sends it over Tailscale to a service on your Mac, which resumes the Claude Code session" width="100%">
+</p>
 
-## 1. Mac setup (once)
+1. **The car** shows Pacenote as an audio app and plays its sound. Android Auto lets sideloaded audio apps in once you turn on *Unknown sources*.
+2. **The phone app** turns your speech into text with the phone's speech recognition. It sends the text to your Mac and reads the replies aloud. It stays connected in the background, so replies reach the car even after a long task.
+3. **[Tailscale](https://tailscale.com)** connects the phone to the Mac from anywhere, encrypted. The Mac service listens only on its Tailscale address, and every request needs a secret token.
+4. **The Mac service** lists sessions from `~/.claude/projects`. For each message it runs one headless Claude Code turn in that session's folder (`claude -p --resume <session>`) and streams the reply back.
 
-You need [Bun](https://bun.sh), Tailscale, and Claude Code signed in with claude.ai.
+<p align="center">
+  <img src="docs/voice-loop.svg" alt="Pick a session, beep and speak, Claude works, the reply is read aloud, then it listens for a follow-up" width="100%">
+</p>
+
+## Requirements
+
+| | |
+|---|---|
+| **Mac** | macOS, with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and signed in (`claude` on your PATH), and [Bun](https://bun.sh) |
+| **Network** | [Tailscale](https://tailscale.com) on the Mac and the phone, signed in to the same tailnet |
+| **Phone** | Android 14 or later, with Android Auto |
+| **Car** | Any car or head unit with Android Auto, wired or wireless |
+| **Tailnet setting** | [MagicDNS](https://tailscale.com/kb/1081/magicdns) on (the default), so the phone can reach the Mac by name |
+
+The phone app isn't on Google Play: you install it from [Releases](https://github.com/globulus/pacenote/releases), or build it yourself.
+
+## Install
+
+### 1. The Mac service
 
 ```bash
+git clone https://github.com/globulus/pacenote.git
+cd pacenote
 scripts/setup.sh
 ```
 
 The script:
 
-- creates `~/.claude-car/` with a random token
-- copies the service there
-- installs it as a launchd agent (`com.theglobulus.claude-car`) that starts at login and restarts if it crashes
+- creates `~/.pacenote/` with a random 64-character token, plus your Mac's service address (its Tailscale name, port 8788)
+- copies the service there and installs it as a background service (a launchd agent) that starts at login and restarts if it stops
+- prints a **pairing QR code** for the phone app. Show it again any time with `scripts/pair.sh`.
 
-Re-run it after changing `bridge/src` or the options:
+> [!IMPORTANT]
+> **macOS privacy:** background services can't read `~/Documents`, `~/Desktop` or `~/Downloads` until you allow them. If your projects live there, allow **bun** once:
+> 1. If macOS asks whether "bun" may access a folder, click **Allow**.
+> 2. If it doesn't ask, open **System Settings → Privacy & Security → Files & Folders** (or **Full Disk Access**) and turn on **bun**. It's usually at `~/.bun/bin/bun`; press Cmd-Shift-G in the file picker to type the path.
+>
+> Until then, Pacenote tells you that macOS is blocking the folder. Tap **Test** in the phone app to check.
 
-```bash
-CAR_EFFORT=low scripts/setup.sh                  # faster replies
-CAR_MODEL=sonnet scripts/setup.sh                # a different model for car turns
-CAR_PERMISSION_MODE=acceptEdits scripts/setup.sh # instead of auto
-```
-
-**macOS privacy:** background services can't read `~/Documents`, `~/Desktop` or `~/Downloads` until you allow them. If your projects live there, allow **bun** once:
-
-1. If macOS shows a prompt like "bun would like to access files in your Documents folder", click **Allow**.
-2. If there's no prompt, open System Settings, then **Privacy & Security**, then **Files & Folders** (or **Full Disk Access**), and turn on **bun**. It's at `~/.bun/bin/bun`; press Cmd-Shift-G in the file picker to type the path.
-
-Until then, the car tells you that macOS is blocking that folder.
-
-Manage the service:
+Check the service at any time:
 
 ```bash
 scripts/service.sh status    # or: restart | stop | start | logs | uninstall
 ```
 
-## 2. Phone setup (once)
+### 2. The phone app
 
-1. Install Tailscale on the phone, sign in to the same tailnet, and set it to **Always-on VPN**.
-2. Build the app on the Mac and install it. The token from setup is baked into the APK, so **don't share the APK**.
-   ```bash
-   cd android
-   JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :app:assembleDebug
-   adb install -r app/build/outputs/apk/debug/app-debug.apk
-   ```
-   Connect the phone by USB, or pair it with wireless debugging (`adb pair` then `adb connect`).
-3. Open **Claude Car**, allow notifications and the microphone, and tap **Battery** to allow unrestricted use. Do the same for Tailscale.
-4. Turn on **Stay connected to your Mac**. Tap **Test**: it should say "Mac reachable". The status notification says "microphone ready" once the car can listen.
-   - Android only lets an app listen in the background if it was opened first, so **open Claude Car once after the phone restarts or the app updates**. The car tells you if the microphone is off.
-   - **Speech language** is what you speak in the car (default `en-US`).
-5. Your sessions are listed below the settings:
-   - Tap one to chat from the phone, or tap **Show in car** to put its conversation in Android Auto.
-   - **New** starts a session in a folder you've used before.
+**Install the prebuilt app** (easiest):
 
-### Updating the app without a cable
+1. On your phone, download the latest `pacenote-*.apk` from [Releases](https://github.com/globulus/pacenote/releases/latest).
+2. Open it and allow the install when Android asks.
+3. Open **Pacenote**, tap **Pair with Mac**, and scan the QR code that `scripts/setup.sh` printed.
+
+Pairing only accepts Tailscale addresses, and always asks before it saves one.
+
+<details>
+<summary><b>Or build it yourself</b></summary>
+
+You need [Android Studio](https://developer.android.com/studio), or JDK 17+ and the Android SDK (platform 36). Build on the Mac where you ran setup: a debug build includes that Mac's address and token, so it needs no pairing.
 
 ```bash
-scripts/publish-app.sh
+cd android
+./gradlew :app:assembleDebug
 ```
 
-builds the app and puts it on the Mac service. On the phone, tap **Update app** (the first time, allow Claude Car to install apps). It downloads over Tailscale, so it works from anywhere. Then open the app once, so the microphone is back on.
+If Gradle can't find Java or the Android SDK, open the `android` folder in Android Studio once. Or set both yourself:
 
-For the very first install without a cable, run `scripts/share-apk.sh`: it prints a download link that works only on your tailnet, for 20 minutes. Open it on the phone, then open the download and allow installing. (Taildrop works too, `tailscale file cp ~/.claude-car/app/claude-car.apk <phone-name>:`, but stalls unless the Tailscale app is open on the phone.)
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+```
 
-## 3. Android Auto setup (once)
+Install it over a cable (turn on USB debugging on the phone):
 
-1. In the Android Auto settings on your phone, tap **Version and permission info** 10 times to enable developer mode.
-2. Open the three-dot menu, then **Developer settings**, and turn on **Unknown sources**.
-3. In Android Auto's settings, open **Customize launcher** and make sure **Claude Car** is ticked.
-4. Recommended: turn off AI message summaries in Android Auto's notification settings, so longer message replies are read in full.
+```bash
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
 
-## In the car
+Or without a cable, with a download link that only works on your tailnet and expires after 20 minutes:
 
-### The Claude Car audio app (recommended)
+```bash
+scripts/publish-app.sh   # builds the app and puts it on the Mac service
+scripts/share-apk.sh     # prints the link
+```
 
-1. Open **Claude Car** from the car's app list.
-2. **Sessions** lists your recent sessions; **New session** lists folders to start one in. Tap one.
-3. It says the session's name, beeps, and listens. Speak; a second tone means it got it.
-4. While Claude works the player shows a spinner; you can play music meanwhile. Claude's reply is read aloud in full, then it beeps and listens for a follow-up (say nothing to stop).
+A debug build contains your token, so don't share it. The prebuilt app contains none.
 
-| Control | Does |
+</details>
+
+On the phone:
+
+1. Open **Pacenote** and allow notifications and the microphone.
+2. Tap **Battery** and allow unrestricted battery use. Do the same for Tailscale, and set Tailscale to **Always-on VPN**, so the connection survives the phone sleeping.
+3. Make sure **Stay connected to your Mac** is on (pairing turns it on), then tap **Test**. It should say "Mac reachable".
+
+### 3. Android Auto
+
+1. In the Android Auto settings on your phone, tap **Version and permission info** about 10 times. This turns on developer mode.
+2. Open the three-dot menu, choose **Developer settings**, and turn on **Unknown sources**.
+3. In Android Auto's settings, open **Customize launcher** and make sure **Pacenote** is ticked.
+
+## Use it
+
+### In the car
+
+1. Open **Pacenote** from the car's app list.
+2. Pick a session under **Sessions**, or a folder under **New session** to start a fresh one there.
+3. It says the session's name, beeps, and listens. Speak; a second tone means it heard you.
+4. Claude's reply is read aloud in full. Then it beeps once more and listens for a follow-up; say nothing to stop.
+
+| Control | What it does |
 |---|---|
-| Play, **Talk**, or the steering wheel's next button | talk (interrupts any reading) |
-| Pause | stop reading or listening (Claude keeps working; its reply is still read out) |
-| Previous, or **Repeat** | read Claude's last reply again |
-| **Stop Claude** (while it works) | cancel what Claude is doing |
-| The queue (list icon) | the conversation, a sentence per row, to read when parked; tap a row to hear it |
+| **Play**, **Talk**, or the steering wheel's *next* button | Talk. This also interrupts any reading. |
+| **Pause** | Stop reading or listening. Claude keeps working, and its reply is still read out. |
+| **Previous**, or **Repeat** | Read Claude's last reply again. |
+| **Stop Claude** (while it works) | Cancel what Claude is doing. You can also just say "stop". |
+| **Queue** (list icon) | The conversation, a sentence per row, to read when parked. Tap a row to hear it. |
 
-### Message conversations
+Things to know:
 
-- **When Android Auto connects**, you get a Claude Car message saying it's ready. The session you used last also appears, ready to continue.
-- **Reply to Claude Car** with a command:
-  - "list" reads your five most recent sessions.
-  - "open two" or "open refund bug" brings that session's conversation up.
-  - "new session in payments" starts a fresh one in that folder.
-- **Reply to a session's conversation** to talk to that session. Say "stop" to cancel what it's doing.
-- **Long work:** Claude says what it's about to do, then reports when it's done. If it's quiet for a while, you'll hear "Still working on it".
+- **Open the app once after restarting the phone or updating the app.** Android only lets an app use the microphone in the background if it was opened first. If you forget, the car tells you.
+- **Permission prompts:** car turns run in Claude Code's **auto** permission mode, since nobody can answer a prompt while you drive. Safe actions go ahead and risky ones are blocked; Claude tells you, and you can do them at the Mac later.
+- **Sessions open on the Mac:** if a session is open in the desktop app or a terminal, or was active in the last two minutes, the car continues in a copy named "… (car)". You'll hear "That session is open on your Mac, so I'm continuing in a copy."
 
-## Testing without a car
+### On the phone
 
-- **Service tests:** `cd bridge && bun test`
-- **Android unit tests:** `cd android && ./gradlew :app:testDebugUnitTest` (the voice loop is tested in `VoiceControllerTest`)
-- **On a device or emulator:** `cd android && ./gradlew :app:connectedDebugAndroidTest` browses the audio app the way Android Auto does and opens a session (it sends nothing to it). It uninstalls the app afterwards.
-- **Poke the service like the phone would:**
-  ```bash
-  scripts/smoke.sh sessions
-  scripts/smoke.sh events
-  scripts/smoke.sh say hub "list sessions"
-  scripts/smoke.sh say <session-id> "what are you working on?"
-  ```
-- **Desktop Head Unit (DHU):**
-  1. Install it with `sdkmanager "extras;google;auto"`.
-  2. On the phone, in Android Auto's developer menu, tap **Start head unit server**.
-  3. Run `adb forward tcp:5277 tcp:5277`, then `~/Library/Android/sdk/extras/google/auto/desktop-head-unit --usb`.
+<p align="center">
+  <img src="docs/phone-sessions.png" alt="The phone app: settings and the list of sessions on the Mac" width="32%">
+  &nbsp;&nbsp;
+  <img src="docs/phone-session.png" alt="A session on the phone: messages to and from Claude" width="32%">
+  <br><sub>The phone app with demo sessions: the session list, and a conversation.</sub>
+</p>
 
+- Tap a session to read and type to it. **Show in car** posts it as a message conversation in Android Auto.
+- **New** starts a session in a folder you've used Claude Code in before.
 
-## Security
+### Message conversations (optional)
 
-- The service listens only on the Mac's Tailscale address and requires the 64-character bearer token. Plain HTTP is used because WireGuard already encrypts the tailnet.
-- Anyone with the token can run prompts in any of your sessions, in auto mode. Keep `~/.claude-car/token` and the APK private.
-- To rotate the token: delete the file, re-run `setup.sh`, and rebuild the APK.
-- New sessions can only start in folders that already have Claude Code sessions.
-- The service also serves the latest APK (with the token inside) to the phone, behind the same token.
+Each session can also appear as a message conversation in Android Auto, from a contact named after the session. You can answer with Android Auto's own voice reply, and a "Pacenote" conversation takes commands such as "list sessions", "open two" and "new session in payments".
+
+This relies on Google Assistant or Gemini taking your reply. With some Google Workspace accounts, Android Auto refuses message replies ("ask your Google Workspace administrator"). The audio app doesn't have this problem.
+
+## Settings
+
+Options for the Mac service. Set them when you run setup:
+
+```bash
+PACENOTE_EFFORT=low scripts/setup.sh
+```
+
+| Variable | Default | |
+|---|---|---|
+| `PACENOTE_MODEL` | your Claude Code default | Model for car turns, e.g. `sonnet` |
+| `PACENOTE_EFFORT` | your Claude Code default | Effort for car turns; `low` replies faster |
+| `PACENOTE_PERMISSION_MODE` | `auto` | Any `--permission-mode` your Claude Code accepts. Actions that would need a prompt are refused, and Claude says so. |
+| `PACENOTE_PORT` | `8788` | Port on the Mac's Tailscale address. Pair again after changing it. |
+
+In the phone app, **Speech language** sets what you speak in the car and the language replies are read in (default `en-US`).
+
+## Updating
+
+- **The Mac service:** pull the new code and run `scripts/setup.sh` again.
+- **The prebuilt app:** in Pacenote, tap **Update app**. It opens [Releases](https://github.com/globulus/pacenote/releases/latest); download the new APK and install it over the old one. Your pairing is kept.
+- **A self-built app:** run `scripts/publish-app.sh` on the Mac, then tap **Update app** on the phone. It downloads the new build from the Mac over Tailscale, so this works from anywhere. The first time, allow Pacenote to install apps.
+
+After an update, open the app once so the microphone is back on.
+
+## Security and privacy
+
+- **Claude acts without you watching.** Car turns run unattended in auto permission mode. Read what that mode allows, and pick a stricter one with `PACENOTE_PERMISSION_MODE` if you prefer.
+- **Only your tailnet can reach the service.** It listens on the Mac's Tailscale address only, never on your local network, and every request needs the token. Plain HTTP is used inside the tailnet because Tailscale's WireGuard tunnel already encrypts it.
+- **Anyone with the token can run prompts in your sessions.** Keep `~/.pacenote/token`, the pairing QR code and any APK you built yourself private. The prebuilt APK contains no token. To change the token: delete the file, run `scripts/setup.sh`, then pair again.
+- **Pairing can't be hijacked by a link.** The app only pairs with Tailscale addresses (MagicDNS names and 100.64.0.0/10), and asks you first.
+- **New sessions start only in known folders,** ones that already have Claude Code sessions.
+- **Where your words go:** speech recognition uses your phone's recognition service, which may process audio online depending on your phone. Your messages then go to Claude Code on your Mac, which works as it always does. Pacenote itself sends nothing anywhere else.
 
 ## Troubleshooting
 
-| Symptom | Check |
+| Symptom | What to check |
 |---|---|
-| Test says the Mac refused the connection | `scripts/service.sh status`. Is the service running? |
-| "Reconnecting…" on the phone | Is Tailscale on (phone and Mac)? Is the Mac awake? |
-| "macOS is blocking the car service from that folder" | Allow bun in Privacy & Security (see Mac setup). |
-| "That session is open on your Mac, so I'm continuing in a copy" | Expected: close it in the desktop app if you want the car to continue the original. |
-| Claude Car isn't in the car's app list | Android Auto: Unknown sources on, and Claude Car ticked in Customize launcher. |
-| "The microphone is off" | Open Claude Car on the phone once (needed after a restart or update). |
-| Replying to a message says to ask your Google Workspace administrator | An Android Auto bug with Workspace accounts. Use the Claude Car audio app instead. |
-| Anything else | `scripts/service.sh logs` |
+| Pacenote isn't in the car's app list | Android Auto developer mode and **Unknown sources** are on, and Pacenote is ticked in **Customize launcher**. |
+| "The microphone is off" | Open Pacenote on the phone once. This is needed after a restart or an update. |
+| **Test** can't reach the Mac | Is Tailscale on and connected, on both the phone and the Mac? Is the Mac awake? Run `scripts/service.sh status`. |
+| "Can't find your Mac by name" | Turn on Tailscale on the phone, and check that MagicDNS is on in the Tailscale admin console. |
+| "That isn't a Pacenote pairing code" | Scan the code from `scripts/pair.sh`. Only Tailscale addresses are accepted. |
+| `service.sh logs` says "is Tailscale connected?" | Connect Tailscale on the Mac; the service retries every 10 seconds. |
+| "macOS is blocking the car service from that folder" | Allow bun in Privacy & Security (see [The Mac service](#1-the-mac-service)). |
+| "That session is open on your Mac, so I'm continuing in a copy" | Expected. Close the session at the Mac if you want the car to continue the original. |
+| Replies are slow | `PACENOTE_EFFORT=low scripts/setup.sh`, or a faster `PACENOTE_MODEL`. |
+| Replying to a *message* asks you to contact your Workspace administrator | A Google limitation with Workspace accounts. Use the Pacenote audio app instead. |
+| Anything else | `scripts/service.sh logs`, and `adb logcat -s PacenoteVoice` for the phone's speech. |
 
-## Layout
+## Limitations
 
-- `bridge/`: the Mac service (Bun + TypeScript, no dependencies, `bun test`)
-  - `sessions.ts`: lists sessions
-  - `runner.ts`: runs headless turns
-  - `car.ts`: routing, copies and queueing
-  - `commands.ts`: hub commands
-  - `http.ts`: the API
-- `scripts/`: setup (launchd), service control, smoke tests, publishing the app (in-app updates) and sharing it (first install)
-- `android/`: the phone app (Kotlin, plain Views)
-  - the audio app: `car/ClaudeMediaService.kt`; the spoken conversation: `voice/`
-  - per-session notifications: `notify/`
-  - connection (and the microphone): `net/`, `service/`
-  - session picker, chat and settings: `ui/`
-  - in-app updates: `update/`
+- **The Mac service needs macOS** (it uses launchd). On Linux it would need a systemd unit instead; contributions are welcome.
+- **Android only:** there's no CarPlay version.
+- **The car screen shows short text.** Android Auto limits text while driving, so replies are spoken; read them in the queue or on the phone when parked.
+- **Sideloaded only:** Android Auto needs developer mode and *Unknown sources* to list the app.
+
+## Development
+
+```
+bridge/    Mac service (Bun + TypeScript; one small dependency, to print the QR code)
+  src/sessions.ts   lists sessions from ~/.claude/projects
+  src/runner.ts     runs headless turns (claude -p --resume … --output-format stream-json)
+  src/car.ts        routing, copies of open sessions, queueing, hub commands
+  src/http.ts       the API (HTTP + server-sent events, bearer token)
+  src/pair.ts       the pairing QR code
+android/   phone app (Kotlin, Android Views)
+  car/              the Android Auto audio app (MediaBrowserService)
+  voice/            the spoken conversation: speech recognition, text to speech, tones
+  service/, net/    the connection to the Mac (and the microphone)
+  notify/           message-conversation notifications
+  ui/, update/      phone screens and in-app updates
+scripts/   setup (launchd), pairing, service control, smoke tests, publishing and sharing the app
+docs/      images for this README
+```
+
+```bash
+cd bridge && bun test                                 # service tests
+cd android && ./gradlew :app:testDebugUnitTest        # app tests, including the voice loop
+cd android && ./gradlew :app:connectedDebugAndroidTest  # on a device or emulator: browses the car app
+                                                        # like Android Auto (and uninstalls the app after)
+scripts/smoke.sh health                               # poke the running service; see the script for more
+```
+
+### Releases
+
+The prebuilt APK is a release build: no address or token inside, and signed with the project's key, which is kept outside the repo in `~/.pacenote-release/` (`release.jks` and `signing.properties` with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`). Without that folder, `./gradlew :app:assembleRelease` builds an unsigned APK.
+
+```bash
+cd android && ./gradlew :app:assembleRelease
+cp app/build/outputs/apk/release/app-release.apk pacenote-0.3.0.apk
+gh release create v0.3.0 pacenote-0.3.0.apk
+```
+
+To try the car UI without a car, use Google's [Desktop Head Unit](https://developer.android.com/training/cars/testing/dhu): install it with `sdkmanager "extras;google;auto"`, choose **Start head unit server** in Android Auto's developer menu, then run `adb forward tcp:5277 tcp:5277` and `desktop-head-unit --usb`.
+
+## License
+
+[MIT](LICENSE).
+
+Claude and Claude Code are trademarks of Anthropic, PBC. Android and Android Auto are trademarks of Google LLC. This project isn't affiliated with or endorsed by either.

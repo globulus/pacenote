@@ -1,4 +1,4 @@
-// The "Claude Car" hub conversation takes a few spoken commands. They're
+// The "Pacenote" hub conversation takes a few spoken commands. They're
 // handled here, without a model, so they're instant and free.
 
 export type Command =

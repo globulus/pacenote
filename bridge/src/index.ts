@@ -1,14 +1,14 @@
 #!/usr/bin/env bun
 /**
- * claude-car service: lets the Android Auto app talk to any Claude Code
+ * Pacenote service: lets the Android Auto app talk to any Claude Code
  * session on this Mac. Runs in the background (launchd); each car message
  * becomes a headless turn in the chosen session.
  */
 import { loadToken } from './auth'
 import { CarService, FileStateStore } from './car'
 import {
-  APP_DIR, BIND, BIND_RETRY_MS, BUFFER_SIZE, CLAUDE_BIN, EFFORT, HEARTBEAT_MS, MODEL, PERMISSION_MODE, PORT, PROJECTS_DIR,
-  SESSION_LIST_LIMIT, STATE_FILE, STILL_WORKING_MS, TOKEN_FILE, TURN_TIMEOUT_MS,
+  APP_DIR, BIND_OVERRIDE, BIND_RETRY_MS, BUFFER_SIZE, CLAUDE_BIN, EFFORT, HEARTBEAT_MS, MODEL, PERMISSION_MODE, PORT, PROJECTS_DIR,
+  SESSION_LIST_LIMIT, STATE_FILE, STILL_WORKING_MS, tailscaleIp, TOKEN_FILE, TURN_TIMEOUT_MS,
 } from './config'
 import { EventLog } from './events'
 import { createHandler } from './http'
@@ -53,14 +53,21 @@ const fetch = createHandler({
 let server: ReturnType<typeof Bun.serve> | null = null
 
 function listen(): void {
+  // Never fall back to all interfaces: no Tailscale address, no server.
+  const bind = BIND_OVERRIDE ?? tailscaleIp()
+  if (!bind) {
+    log("can't find this Mac's Tailscale address (is Tailscale running and connected?); retrying")
+    setTimeout(listen, BIND_RETRY_MS)
+    return
+  }
   try {
     // idleTimeout 0: SSE streams stay open; heartbeats keep NATs awake.
-    server = Bun.serve({ hostname: BIND, port: PORT, idleTimeout: 0, fetch })
-    log(`listening on http://${BIND}:${PORT} (claude: ${CLAUDE_BIN}, permission mode: ${PERMISSION_MODE})`)
+    server = Bun.serve({ hostname: bind, port: PORT, idleTimeout: 0, fetch })
+    log(`listening on http://${bind}:${PORT} (claude: ${CLAUDE_BIN}, permission mode: ${PERMISSION_MODE})`)
   } catch (err) {
     const code = (err as { code?: string }).code ?? String(err)
-    if (code === 'EADDRNOTAVAIL') log(`${BIND} is not up yet (is Tailscale connected?); retrying`)
-    else log(`can't listen on ${BIND}:${PORT}: ${code}; retrying`)
+    // A disconnected Tailscale shows up as EADDRNOTAVAIL or, oddly, EADDRINUSE.
+    log(`can't listen on ${bind}:${PORT} (${code}): is Tailscale connected? Is another Pacenote service running? Retrying`)
     setTimeout(listen, BIND_RETRY_MS)
   }
 }

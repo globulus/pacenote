@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <path id="bubble" d="M4,3h40a4,4 0,0 1,4 4v26a4,4 0,0 1,-4 4H18l-10,8v-8H4a4,4 0,0 1,-4 -4V7a4,4 0,0 1,4 -4zM12,20a4,4 0,1 0,8 0a4,4 0,1 0,-8 0zM28,20a4,4 0,1 0,8 0a4,4 0,1 0,-8 0z"/>
+  </defs>
+  <!-- bezel and screen -->
+  <rect width="960" height="520" rx="36" fill="#050505"/>
+  <rect x="16" y="16" width="928" height="488" rx="24" fill="#111110" stroke="#2E2D2A"/>
+  <!-- rail -->
+  <rect x="16" y="16" width="92" height="488" rx="24" fill="#191918"/>
+  <g fill="#6F6C66">
+    <circle cx="62" cy="74" r="14"/>
+    <path d="M62,118 l15,32 -15,-9 -15,9z"/>
+    <circle cx="62" cy="200" r="14" fill="none" stroke="#6F6C66" stroke-width="4"/>
+  </g>
+  <rect x="38" y="236" width="48" height="48" rx="14" fill="#F2A541" fill-opacity="0.2"/>
+  <use href="#bubble" transform="translate(47 247) scale(0.62)" fill="#F2A541"/>
+  <text x="62" y="478" font-size="17" fill="#A8A49B" text-anchor="middle">9:41</text>
+
+  <!-- header -->
+  <use href="#bubble" transform="translate(140 46) scale(0.6)" fill="#F2A541"/>
+  <text x="182" y="70" font-size="24" font-weight="700" fill="#F5F4EE">Pacenote</text>
+  <g font-size="19" text-anchor="middle">
+    <text x="610" y="70" fill="#F5F4EE" font-weight="600">Sessions</text>
+    <rect x="560" y="84" width="100" height="4" rx="2" fill="#F2A541"/>
+    <text x="790" y="70" fill="#A8A49B">New session</text>
+  </g>
+  <rect x="132" y="104" width="796" height="1" fill="#2E2D2A"/>
+
+  <!-- rows -->
+  <g>
+    <rect x="132" y="116" width="796" height="84" rx="14" fill="#1F1E1D"/>
+    <rect x="152" y="134" width="48" height="48" rx="10" fill="#2B2A27"/>
+    <use href="#bubble" transform="translate(162 146) scale(0.58)" fill="#F2A541"/>
+    <text x="222" y="152" font-size="22" font-weight="600" fill="#F5F4EE">Refund bug</text>
+    <text x="222" y="180" font-size="17" fill="#A8A49B">payments-api · 5 min ago · <tspan fill="#F2A541">working</tspan></text>
+
+    <rect x="152" y="230" width="48" height="48" rx="10" fill="#2B2A27"/>
+    <use href="#bubble" transform="translate(162 242) scale(0.58)" fill="#8B8780"/>
+    <text x="222" y="248" font-size="22" font-weight="600" fill="#F5F4EE">Docs site redesign</text>
+    <text x="222" y="276" font-size="17" fill="#A8A49B">docs · 1 hour ago</text>
+
+    <rect x="152" y="320" width="48" height="48" rx="10" fill="#2B2A27"/>
+    <use href="#bubble" transform="translate(162 332) scale(0.58)" fill="#8B8780"/>
+    <text x="222" y="338" font-size="22" font-weight="600" fill="#F5F4EE">Flaky login test</text>
+    <text x="222" y="366" font-size="17" fill="#A8A49B">mobile-app · yesterday</text>
+
+    <rect x="152" y="410" width="48" height="48" rx="10" fill="#2B2A27"/>
+    <use href="#bubble" transform="translate(162 422) scale(0.58)" fill="#8B8780"/>
+    <text x="222" y="428" font-size="22" font-weight="600" fill="#F5F4EE">Release notes for 2.4</text>
+    <text x="222" y="456" font-size="17" fill="#A8A49B">webshop · 2 days ago</text>
+  </g>
+  <g fill="#2E2D2A">
+    <rect x="222" y="210" width="706" height="1"/>
+    <rect x="222" y="300" width="706" height="1"/>
+    <rect x="222" y="390" width="706" height="1"/>
+  </g>
+</svg>

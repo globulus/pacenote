@@ -4,7 +4,7 @@ export type Role = 'user' | 'claude' | 'system'
 
 export type CarEvent = {
   id: string // `${bootId}.${seq}`
-  /** The Claude Code session this belongs to, or "hub" for the Claude Car command chat. */
+  /** The Claude Code session this belongs to, or "hub" for the Pacenote command chat. */
   session_id: string
   role: Role
   text: string
